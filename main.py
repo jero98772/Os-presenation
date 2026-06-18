@@ -12,6 +12,9 @@ NEO_DIM = "#003B00"
 NEO_ORANGE = "#FF8C00"
 NEO_PINK = "#FF00AA"
 BG_BLACK = "#000000"
+CRAIL = "#E05A4E"
+DARK = "#B0C4B1"
+SEC = NEO_CYAN
 
 
 # ─── HELPERS ──────────────────────────────────────────────────────────────────
@@ -65,6 +68,41 @@ def rain_chars(n=40):
     return g
 
 
+def repo_card(name, desc, url_short, col=NEO_CYAN, w=5.6, h=1.45):
+    """Card for a GitHub repo."""
+    box = RoundedRectangle(
+        width=w,
+        height=h,
+        corner_radius=0.12,
+        stroke_color=col,
+        stroke_width=1.8,
+        fill_color=col,
+        fill_opacity=0.06,
+    )
+    name_t = T(name, sz=19, col=col, bold=True)
+    desc_t = T(desc, sz=14, col=NEO_WHITE)
+    url_t = T(url_short, sz=13, col=NEO_DIM)
+    content = VGroup(name_t, desc_t, url_t).arrange(DOWN, buff=0.08, aligned_edge=LEFT)
+    content.move_to(box).shift(LEFT * 0.1)
+    return VGroup(box, content)
+
+
+def tag_box(text, col=NEO_GREEN):
+    """Pill-shaped label tag."""
+    box = RoundedRectangle(
+        width=len(text) * 0.145 + 0.5,
+        height=0.5,
+        corner_radius=0.15,
+        stroke_color=col,
+        stroke_width=1.5,
+        fill_color=col,
+        fill_opacity=0.12,
+    )
+    lbl = T(text, sz=17, col=col)
+    lbl.move_to(box)
+    return VGroup(box, lbl)
+
+
 def img_placeholder(w=3.0, h=2.2, label="[ IMAGE ]", col=NEO_CYAN):
     box = RoundedRectangle(
         width=w,
@@ -102,20 +140,133 @@ class NeoSlide(Scene):
     def setup(self):
         self.camera.background_color = BG_BLACK
 
-    def rain_in(self, dur=0.5):
+    def rain_in(self, dur=0.4):
         r = rain_chars(45)
         self.add(r)
         self.wait(dur)
         self.remove(r)
 
-    def flash_in(self, mob, lag=0.05):
+    def flash_in(self, mob, lag=0.06):
         self.play(
             LaggedStart(*[FadeIn(s, shift=DOWN * 0.08) for s in mob], lag_ratio=lag)
         )
 
-    def glitch(self, mob, col_a=NEO_YELLOW, col_b=NEO_GREEN):
-        self.play(mob.animate.set_color(col_a), run_time=0.06)
-        self.play(mob.animate.set_color(col_b), run_time=0.06)
+    def glitch(self, mob, a=NEO_YELLOW, b=NEO_GREEN):
+        self.play(mob.animate.set_color(a), run_time=0.07)
+        self.play(mob.animate.set_color(b), run_time=0.07)
+
+    def clear_all(self):
+        mobs = [m for m in self.mobjects if hasattr(m, "get_center")]
+        if mobs:
+            self.play(FadeOut(*mobs), run_time=0.45)
+
+
+class SA1_AboutMe(NeoSlide):
+    """SA1 + SA2 merged: identity left, achievements right, one slide."""
+
+    def construct(self):
+        self.rain_in()
+        bd = glowing_border(NEO_CYAN)
+        self.play(Create(bd), run_time=0.5)
+
+        h = hdr("ABOUT ME", NEO_CYAN)
+        h.to_edge(UP, buff=0.38)
+        self.play(FadeIn(h))
+
+        # ── vertical centre divider ───────────────────────────────────────────
+        vdiv = Line(UP * 2.8, DOWN * 3.1, color=NEO_DIM, stroke_width=1.0)
+        vdiv.set_x(0)
+        self.play(Create(vdiv), run_time=0.4)
+
+        # ════════════════════════════════
+        #  LEFT  – identity
+        # ════════════════════════════════
+        name = T("Daniel Arango Sohm", sz=32, col=NEO_WHITE, bold=True)
+        name.set_color_by_gradient(NEO_GREEN, NEO_CYAN)
+        name.move_to(LEFT * 3.2 + UP * 2.05)
+        self.play(Write(name), run_time=0.8)
+
+        roles = VGroup(
+            T("Student @ EAFIT  ·  Engineer @ EPAM", sz=19, col=DARK),
+            T("Leader (Dictator) at ML EAFIT", sz=19, col=CRAIL, bold=True),
+        ).arrange(DOWN, buff=0.12, aligned_edge=LEFT)
+        roles.next_to(name, DOWN, buff=0.18)
+        roles.set_x(name.get_x(), LEFT)
+        self.play(
+            LaggedStart(*[FadeIn(r, shift=RIGHT * 0.12) for r in roles], lag_ratio=0.3)
+        )
+
+        flags_row = VGroup(
+            tag_box("Col", CRAIL),
+            tag_box("De", NEO_YELLOW),
+            tag_box("Ru/Ua", NEO_CYAN),
+        ).arrange(RIGHT, buff=0.22)
+        flags_row.next_to(roles, DOWN, buff=0.22)
+        flags_row.set_x(name.get_x(), LEFT)
+        self.play(FadeIn(flags_row))
+
+        ldiv = Line(LEFT * 0.1, RIGHT * 5.5, color=NEO_DIM, stroke_width=0.8)
+        ldiv.next_to(flags_row, DOWN, buff=0.20)
+        ldiv.set_x(name.get_x(), LEFT)
+        self.play(Create(ldiv))
+
+        sp_title = T("Speaker:", sz=20, col=CRAIL, bold=True)
+        sp_title.next_to(ldiv, DOWN, buff=0.16)
+        sp_title.set_x(name.get_x(), LEFT)
+        talks = VGroup(
+            T("• Python Moscow 2024", sz=18, col=SEC),
+            T("• Python Medellín 2024,2025,2026", sz=18, col=SEC),
+            T("• PyCon Colombia 2025", sz=18, col=SEC),
+            T("• Medellín JS", sz=18, col=SEC),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.10)
+        talks.next_to(sp_title, DOWN, buff=0.12)
+        talks.set_x(name.get_x(), LEFT)
+
+        self.play(FadeIn(sp_title))
+        self.play(
+            LaggedStart(*[FadeIn(t, shift=RIGHT * 0.08) for t in talks], lag_ratio=0.18)
+        )
+
+        # ════════════════════════════════
+        #  RIGHT  – awards + terminal
+        # ════════════════════════════════
+        aw_title = T("ACHIEVEMENTS", sz=22, col=NEO_YELLOW, bold=True)
+        aw_title.move_to([3.2, 2.1, 0])
+
+        awards = [
+            ("🏆", "Best CS Project @ EAFIT", "2022-1 · 2023-1 · 2024-1", NEO_YELLOW),
+            ("🥇", "Claude Hackathon — 1st Place", "built same day · 2025-2", CRAIL),
+        ]
+
+        self.play(FadeIn(aw_title, shift=DOWN * 0.1))
+
+        prev = aw_title
+        award_grps = []
+        for icon, title, sub, col in awards:
+            box = RoundedRectangle(
+                width=6.2,
+                height=1.25,
+                corner_radius=0.12,
+                stroke_color=col,
+                stroke_width=1.8,
+                fill_color=col,
+                fill_opacity=0.07,
+            )
+            icon_t = Text(icon, font_size=34)
+            title_t = T(title, sz=20, col=col, bold=True)
+            sub_t = T(sub, sz=15, col=NEO_WHITE)
+            txt_grp = VGroup(title_t, sub_t).arrange(DOWN, buff=0.07, aligned_edge=LEFT)
+            content = VGroup(icon_t, txt_grp).arrange(RIGHT, buff=0.28)
+            content.move_to(box)
+            grp = VGroup(box, content)
+            grp.next_to(prev, DOWN, buff=0.22)
+            grp.set_x(3.2)
+            award_grps.append(grp)
+            self.play(FadeIn(grp, shift=UP * 0.1), run_time=0.45)
+            prev = grp
+
+        self.wait(2.2)
+        self.clear_all()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -420,6 +571,149 @@ class S05_Trits(NeoSlide):
             FadeOut(VGroup(bd, h, ph, src_lbl, trit_row, trit_title, facts)),
             run_time=0.5,
         )
+
+
+class SA4_Simulators(NeoSlide):
+    def construct(self):
+        bd = glowing_border(NEO_CYAN)
+        self.play(Create(bd), run_time=0.5)
+
+        h = hdr("SIMULATORS — TEST BEFORE YOU BUILD", NEO_CYAN)
+        h.to_edge(UP, buff=0.45)
+        self.play(FadeIn(h))
+
+        cards_data = [
+            # (name, desc, url_short, col)
+            (
+                "thrml",
+                "Thermodynamic PGM / p-bit sampler (JAX)\nExtropic hardware prototype",
+                "github.com/extropic-ai/thrml",
+                NEO_ORANGE,
+            ),
+            (
+                "PennyLane",
+                "Quantum differentiable programming\nSimulates qubits & photonic circuits",
+                "github.com/PennyLaneAI/pennylane",
+                NEO_PURPLE,
+            ),
+            (
+                "cl-sdk",
+                "Cortical Labs CL1 biological neuron sim\nReplays spike / sample recordings",
+                "github.com/Cortical-Labs/cl-sdk",
+                NEO_GREEN,
+            ),
+            (
+                "simphony",
+                "Silicon photonics circuit simulator\nBYU — waveguides, MZIs, ring resonators",
+                "github.com/BYUCamachoLab/simphony",
+                NEO_CYAN,
+            ),
+            (
+                "Verilog /\nLogiSim",
+                "Transistor-level RTL simulation\ntest gates → FPGAs → ASICs",
+                "iverilog · verilator · logisim-evolution",
+                NEO_YELLOW,
+            ),
+        ]
+
+        cards = VGroup()
+        for name, desc, url, col in cards_data:
+            cards.add(repo_card(name, desc, url, col, w=5.4, h=1.52))
+
+        # Grid 2+2+1
+        row1 = VGroup(cards[0], cards[1]).arrange(RIGHT, buff=0.35)
+        row2 = VGroup(cards[2], cards[3]).arrange(RIGHT, buff=0.35)
+        row3 = cards[4]
+        row3.set_width(row1.width)
+        layout = VGroup(row1, row2, row3).arrange(DOWN, buff=0.24)
+        layout.next_to(h, DOWN, buff=0.38)
+
+        for card in cards:
+            self.play(FadeIn(card, scale=0.85), run_time=0.22)
+        self.wait(2.0)
+        self.clear_all()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SA5 – ALL THE STUFF I READ (resources)
+# ══════════════════════════════════════════════════════════════════════════════
+class SA5_Resources(NeoSlide):
+    def construct(self):
+        bd = glowing_border(NEO_GREEN)
+        self.play(Create(bd), run_time=0.5)
+
+        h = hdr("THE RABBIT HOLE  //  REQUIRED READING", NEO_GREEN)
+        h.to_edge(UP, buff=0.45)
+        self.play(FadeIn(h))
+
+        resources = [
+            # (emoji, title, short_url, col)
+            (
+                "📖",
+                "Writing an OS in 1000 Lines",
+                "operating-system-in-1000-lines.vercel.app",
+                NEO_GREEN,
+            ),
+            (
+                "📖",
+                "xv6: A Simple UNIX-like Teaching OS",
+                "pdos.csail.mit.edu/6.828/2025/xv6/book-riscv-rev5.pdf",
+                NEO_CYAN,
+            ),
+            (
+                "🔧",
+                "Writing a RISC-V OS in Rust  (osblog)",
+                "osblog.stephenmarz.com",
+                NEO_YELLOW,
+            ),
+            (
+                "⚡",
+                "FemtoRV: Blinker → RISC-V in one tutorial",
+                "github.com/BrunoLevy/learn-fpga  FemtoRV",
+                NEO_ORANGE,
+            ),
+            (
+                "🌡",
+                "TSU-101: Thermodynamic Computing Hardware",
+                "extropic.ai/writing/tsu-101-...",
+                NEO_PURPLE,
+            ),
+        ]
+
+        prev = h
+        for emoji, title, url, col in resources:
+            box = RoundedRectangle(
+                width=12.0,
+                height=0.88,
+                corner_radius=0.1,
+                stroke_color=col,
+                stroke_width=1.5,
+                fill_color=col,
+                fill_opacity=0.06,
+            )
+            e_t = Text(emoji, font_size=26)
+            title_t = T(title, sz=20, col=col, bold=True)
+            url_t = T(url, sz=15, col=NEO_DIM)
+            text_grp = VGroup(title_t, url_t).arrange(
+                DOWN, buff=0.04, aligned_edge=LEFT
+            )
+            row = VGroup(e_t, text_grp).arrange(RIGHT, buff=0.3, aligned_edge=UP)
+            row.move_to(box)
+            grp = VGroup(box, row)
+            grp.next_to(prev, DOWN, buff=0.18)
+            self.play(FadeIn(grp, shift=RIGHT * 0.12), run_time=0.3)
+            prev = grp
+
+        tip = T(
+            "Read one.  Build one.  THEN you have the right to talk.",
+            sz=20,
+            col=NEO_YELLOW,
+            bold=True,
+        )
+        tip.to_edge(DOWN, buff=0.28)
+        self.play(FadeIn(tip))
+        self.wait(2.0)
+        self.clear_all()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1526,6 +1820,63 @@ class S20_Kernel(NeoSlide):
 
 
 # ══════════════════════════════════════════════════════════════════════════════
+class SA3_AIcanOS(NeoSlide):
+    def construct(self):
+        self.rain_in(0.4)
+        bd = glowing_border(NEO_PURPLE)
+        self.play(Create(bd), run_time=0.5)
+
+        big = T("AI CAN MAKE AN OS?", sz=50, col=NEO_PURPLE, bold=True)
+        big.set_color_by_gradient(NEO_PURPLE, NEO_CYAN)
+        big.to_edge(UP, buff=0.5)
+        self.play(Write(big), run_time=0.8)
+        self.glitch(big)
+
+        div = hr(NEO_PURPLE, 11)
+        div.next_to(big, DOWN, buff=0.22)
+        self.play(Create(div))
+
+        # ── Two columns ───────────────────────────────────────────────────────
+        yes_hdr = T("✓ Things AI can do", sz=24, col=NEO_GREEN, bold=True)
+        yes_pts = VGroup(
+            T("Generate bootloader scaffolding", sz=20, col=NEO_WHITE),
+            T("Write libc stubs from spec", sz=20, col=NEO_WHITE),
+            T("Translate C→RISC-V asm snippets", sz=20, col=NEO_WHITE),
+            T("Explain xv6 / OSDev book sections", sz=20, col=NEO_WHITE),
+            T("Generate Verilog FSMs from pseudocode", sz=20, col=NEO_WHITE),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+        yes_col = VGroup(yes_hdr, yes_pts).arrange(DOWN, buff=0.2, aligned_edge=LEFT)
+
+        no_hdr = T("❌ Things AI cannot do", sz=24, col=NEO_RED, bold=True)
+        no_pts = VGroup(
+            T("Understand YOUR hardware quirks", sz=20, col=NEO_WHITE),
+            T("Debug bare-metal without you running", sz=20, col=NEO_WHITE),
+            T("Replace reading the actual book", sz=20, col=NEO_WHITE),
+            T("Understand the kernel panic", sz=20, col=NEO_WHITE),
+            T("Make the design decisions for you", sz=20, col=NEO_WHITE),
+            T("Actually flip the transistors", sz=20, col=NEO_WHITE),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.16)
+        no_col = VGroup(no_hdr, no_pts).arrange(DOWN, buff=0.2, aligned_edge=LEFT)
+
+        cols = VGroup(yes_col, no_col).arrange(RIGHT, buff=1.1)
+        cols.next_to(div, DOWN, buff=0.35)
+
+        verdict = T(
+            "How many $ i spend?",
+            sz=22,
+            col=NEO_YELLOW,
+            bold=True,
+        )
+        verdict.to_edge(DOWN, buff=0.32)
+
+        self.flash_in(yes_col, 0.1)
+        self.flash_in(no_col, 0.1)
+        self.play(FadeIn(verdict))
+        self.wait(2.0)
+        self.clear_all()
+
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  S21 – BATTERY NOT INCLUDED
 # ══════════════════════════════════════════════════════════════════════════════
 class S21_NotIncluded(NeoSlide):
@@ -1572,134 +1923,63 @@ class S21_NotIncluded(NeoSlide):
         self.play(FadeOut(VGroup(bd, hd, panels, note)), run_time=0.5)
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-#  S22 – OOP ASSEMBLY (final assembly slide-by-slide)
-# ══════════════════════════════════════════════════════════════════════════════
-class S22_Assembly(NeoSlide):
+class SA6_Thanks(NeoSlide):
     def construct(self):
-        bd = glowing_border()
+        # Full matrix rain intro
+        rain1 = rain_chars(70)
+        rain1.set_opacity(0.3)
+        self.add(rain1)
+        self.wait(0.7)
+        self.remove(rain1)
+
+        bd = glowing_border(NEO_GREEN)
         self.play(Create(bd), run_time=0.5)
 
-        hd = T("ASSEMBLING THE OS  ·  OOP", sz=40, col=NEO_GREEN, bold=True)
-        hd.set_color_by_gradient(NEO_GREEN, NEO_CYAN)
-        hd.to_edge(UP, buff=0.45)
-        line = hr(NEO_GREEN, 12)
-        line.next_to(hd, DOWN, buff=0.1)
-        self.play(FadeIn(hd), Create(line))
-
-        classes = [
-            ("class BootLoader", NEO_YELLOW),
-            ("class FileSystem", NEO_PURPLE),
-            ("class Scheduler", NEO_CYAN),
-            ("class Pager", NEO_WHITE),
-            ("class SysCall", NEO_GREEN),
-            ("class Interrupt", NEO_RED),
-        ]
-        class_boxes = VGroup()
-        for cname, col in classes:
-            b = RoundedRectangle(
-                width=3.5,
-                height=0.65,
-                corner_radius=0.08,
-                stroke_color=col,
-                stroke_width=1.8,
-                fill_color=col,
-                fill_opacity=0.07,
-            )
-            t = T(cname, sz=19, col=col, bold=True)
-            t.move_to(b)
-            class_boxes.add(VGroup(b, t))
-
-        class_boxes.arrange_in_grid(2, 3, buff=(0.4, 0.28))
-        class_boxes.next_to(line, DOWN, buff=0.45)
-
-        kern_banner = RoundedRectangle(
-            width=12.2,
-            height=0.75,
-            corner_radius=0.1,
-            stroke_color=NEO_GREEN,
-            stroke_width=2.5,
-            fill_color=NEO_GREEN,
-            fill_opacity=0.1,
-        )
-        kern_txt = T(
-            "class Kernel(BootLoader, FileSystem, Scheduler, Pager, SysCall, Interrupt):",
-            sz=19,
-            col=NEO_GREEN,
-            bold=True,
-        )
-        kern_txt.move_to(kern_banner)
-        kern_grp = VGroup(kern_banner, kern_txt)
-        kern_grp.to_edge(DOWN, buff=0.35)
-
-        for box in class_boxes:
-            self.play(FadeIn(box, scale=0.7), run_time=0.2)
-        self.wait(0.3)
-
-        arrows_ = VGroup(
-            *[
-                Arrow(
-                    box.get_bottom(),
-                    kern_grp.get_top(),
-                    buff=0.05,
-                    color=NEO_DIM,
-                    stroke_width=1.0,
-                    max_tip_length_to_length_ratio=0.1,
-                )
-                for box in class_boxes
-            ]
-        )
-        self.play(Create(arrows_), run_time=0.7)
-        self.play(FadeIn(kern_grp))
-        self.glitch(kern_grp)
-
-        self.wait(2.0)
-        self.play(
-            FadeOut(VGroup(bd, hd, line, class_boxes, arrows_, kern_grp)), run_time=0.5
-        )
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  S23 – END CARD
-# ══════════════════════════════════════════════════════════════════════════════
-class S23_EndCard(NeoSlide):
-    def construct(self):
-        self.rain_in(0.5)
-        bd = glowing_border()
-        self.play(Create(bd), run_time=0.5)
-
-        big = T("NOW GO BUILD IT.", sz=56, col=NEO_GREEN, bold=True)
-        big.set_color_by_gradient(NEO_GREEN, NEO_CYAN, NEO_PURPLE)
-        big.move_to(UP * 1.5)
-
-        sub = T("Your OS. Your rules. Your ring-0.", sz=30, col=NEO_CYAN)
-        sub.next_to(big, DOWN, buff=0.45)
-
-        cta = T("git init my_os  &&  vim kernel/main.c", sz=26, col=NEO_GREEN)
-        cta.next_to(sub, DOWN, buff=0.4)
-
-        tip = T(
-            "Start: write a 512-byte MBR that prints 'Hello' in 16-bit real mode.",
-            sz=20,
-            col=NEO_DIM,
-        )
-        tip.next_to(cta, DOWN, buff=0.28)
-
-        cur = T("█", sz=30, col=NEO_GREEN)
-        cur.next_to(cta, RIGHT, buff=0.06)
-
+        big = T("THANKS", sz=86, col=NEO_GREEN, bold=True)
+        big.set_color_by_gradient(NEO_GREEN, NEO_CYAN)
+        big.move_to(UP * 1.8)
         self.play(Write(big), run_time=0.9)
-        self.play(FadeIn(sub, shift=UP * 0.1))
-        self.play(FadeIn(cta))
+        self.glitch(big)
+
+        # ASCII thank-you art
+        ascii_art = VGroup(
+            T("┌──────────────────────────────────────┐", sz=14, col=NEO_DIM),
+            T("│  You survived the entire talk!       │", sz=14, col=NEO_GREEN),
+            T("│  That alone makes you a real hacker. │", sz=14, col=NEO_CYAN),
+            T("│                                      │", sz=14, col=NEO_DIM),
+            T("│   ███████╗███╗  ██╗██████╗           │", sz=14, col=NEO_GREEN),
+            T("│   ██╔════╝████╗ ██║██╔══██╗          │", sz=14, col=NEO_GREEN),
+            T("│   █████╗  ██╔██╗██║██║  ██║          │", sz=14, col=NEO_CYAN),
+            T("│   ██╔══╝  ██║╚████║██║  ██║          │", sz=14, col=NEO_CYAN),
+            T("│   ███████╗██║ ╚███║██████╔╝          │", sz=14, col=NEO_PURPLE),
+            T("│   ╚══════╝╚═╝  ╚══╝╚═════╝           │", sz=14, col=NEO_PURPLE),
+            T("└──────────────────────────────────────┘", sz=14, col=NEO_DIM),
+        ).arrange(DOWN, buff=0.03)
+        ascii_art.next_to(big, DOWN, buff=0.32)
+
+        self.flash_in(ascii_art, lag=0.04)
+
+        # Social / contact line
+        contact = T(
+            "github.com/DanielArangoSohm  ·  ML EAFIT  ·  EPAM", sz=18, col=NEO_DIM
+        )
+        contact.to_edge(DOWN, buff=0.45)
+        self.play(FadeIn(contact))
+
+        # Final cursor
+        cur = T("█", sz=40, col=NEO_GREEN)
+        cur.next_to(big, RIGHT, buff=0.08)
         self.play(FadeIn(cur))
         self.play(Blink(cur, blinks=3))
-        self.play(FadeIn(tip))
 
-        rain2 = rain_chars(55)
-        rain2.set_opacity(0.12)
+        # Ambient rain overlay at end
+        rain2 = rain_chars(60)
+        rain2.set_opacity(0.1)
         self.add(rain2)
         self.wait(3.0)
-        self.play(FadeOut(VGroup(bd, big, sub, cta, cur, tip, rain2)), run_time=1.0)
+        self.play(
+            FadeOut(VGroup(bd, big, ascii_art, contact, cur, rain2)), run_time=1.0
+        )
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1707,8 +1987,10 @@ class S23_EndCard(NeoSlide):
 # ══════════════════════════════════════════════════════════════════════════════
 class FullPresentation(
     S01_Title,
+    SA1_AboutMe,
     S02_Terry,
     S03_Paradigms,
+    SA4_Simulators,
     S04_Pbit,
     S05_Trits,
     S06_WoodPhone,
@@ -1718,6 +2000,8 @@ class FullPresentation(
     S10_GPUMisconception,
     S11_Definition,
     S12_PythonOS,
+    SA3_AIcanOS,
+    SA5_Resources,
     S13_BootLoader,
     S14_Scheduler,
     S15_FileSystem,
@@ -1727,8 +2011,7 @@ class FullPresentation(
     S19_KernelPanic,
     S20_Kernel,
     S21_NotIncluded,
-    S22_Assembly,
-    S23_EndCard,
+    SA6_Thanks,
 ):
     def setup(self):
         self.camera.background_color = BG_BLACK
@@ -1736,8 +2019,10 @@ class FullPresentation(
     def construct(self):
         slide_names = [
             S01_Title,
+            SA1_AboutMe,
             S02_Terry,
             S03_Paradigms,
+            SA4_Simulators,
             S06_WoodPhone,
             S04_Pbit,
             S05_Trits,
@@ -1747,6 +2032,8 @@ class FullPresentation(
             S10_GPUMisconception,
             S11_Definition,
             S12_PythonOS,
+            SA3_AIcanOS,
+            SA5_Resources,
             S13_BootLoader,
             S14_Scheduler,
             S15_FileSystem,
@@ -1756,8 +2043,7 @@ class FullPresentation(
             S19_KernelPanic,
             S20_Kernel,
             S21_NotIncluded,
-            S22_Assembly,
-            S23_EndCard,
+            SA6_Thanks,
         ]
         for SlideClass in slide_names:
             SlideClass.construct(self)
